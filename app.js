@@ -325,4 +325,230 @@ document.addEventListener('DOMContentLoaded', () => {
       }, 1200);
     });
   }
+
+  // 10. Emerald AI Chat Widget System (Connected to Local n8n Agent)
+  const N8N_CHAT_WEBHOOK_URL = 'http://localhost:5678/webhook/3dd4f90f-8626-49ed-bf5a-3137760a6dd6/chat';
+  const chatWidget = document.getElementById('chatWidget');
+  const chatToggleBtn = document.getElementById('chatToggleBtn');
+  const chatWindow = document.getElementById('chatWindow');
+  const chatCloseBtn = document.getElementById('chatCloseBtn');
+  const chatResetBtn = document.getElementById('chatResetBtn');
+  const chatMessages = document.getElementById('chatMessages');
+  const chatInputForm = document.getElementById('chatInputForm');
+  const chatInput = document.getElementById('chatInput');
+  const chatSendBtn = document.getElementById('chatSendBtn');
+  const chatTypingIndicator = document.getElementById('chatTypingIndicator');
+
+  // Session ID manager
+  function getChatSessionId() {
+    let sid = localStorage.getItem('emerald_landscape_chat_session');
+    if (!sid) {
+      sid = 'session_' + Math.random().toString(36).substring(2, 11) + '_' + Date.now();
+      localStorage.setItem('emerald_landscape_chat_session', sid);
+    }
+    return sid;
+  }
+
+  let chatSessionId = getChatSessionId();
+
+  // Format simple markdown into HTML
+  function formatMarkdown(text) {
+    if (!text) return '';
+    let escaped = text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+
+    // Bold **text**
+    escaped = escaped.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+    // Bullet lists (* item or - item)
+    const lines = escaped.split('\n');
+    let formattedLines = [];
+    let inList = false;
+
+    lines.forEach(line => {
+      const trimmed = line.trim();
+      if (trimmed.startsWith('* ') || trimmed.startsWith('- ')) {
+        if (!inList) {
+          formattedLines.push('<ul>');
+          inList = true;
+        }
+        formattedLines.push(`<li>${trimmed.substring(2)}</li>`);
+      } else {
+        if (inList) {
+          formattedLines.push('</ul>');
+          inList = false;
+        }
+        if (trimmed.length > 0) {
+          formattedLines.push(`<p>${line}</p>`);
+        }
+      }
+    });
+
+    if (inList) {
+      formattedLines.push('</ul>');
+    }
+
+    return formattedLines.join('');
+  }
+
+  function scrollChatToBottom() {
+    if (chatMessages) {
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+  }
+
+  function appendChatMessage(role, content) {
+    if (!chatMessages) return;
+
+    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `chat-msg chat-msg-${role}`;
+
+    const bubbleDiv = document.createElement('div');
+    bubbleDiv.className = 'chat-msg-bubble';
+
+    if (role === 'bot') {
+      bubbleDiv.innerHTML = formatMarkdown(content);
+    } else {
+      bubbleDiv.textContent = content;
+    }
+
+    const timeSpan = document.createElement('span');
+    timeSpan.className = 'chat-msg-time';
+    timeSpan.textContent = timeStr;
+
+    msgDiv.appendChild(bubbleDiv);
+    msgDiv.appendChild(timeSpan);
+    chatMessages.appendChild(msgDiv);
+    scrollChatToBottom();
+  }
+
+  // Toggle chat widget open/close
+  if (chatToggleBtn && chatWidget) {
+    chatToggleBtn.addEventListener('click', () => {
+      const isActive = chatWidget.classList.toggle('active');
+      chatToggleBtn.setAttribute('aria-expanded', isActive);
+      if (chatWindow) {
+        chatWindow.setAttribute('aria-hidden', !isActive);
+      }
+      if (isActive && chatInput) {
+        setTimeout(() => chatInput.focus(), 250);
+      }
+    });
+  }
+
+  if (chatCloseBtn && chatWidget) {
+    chatCloseBtn.addEventListener('click', () => {
+      chatWidget.classList.remove('active');
+      if (chatWindow) {
+        chatWindow.setAttribute('aria-hidden', 'true');
+      }
+      if (chatToggleBtn) {
+        chatToggleBtn.setAttribute('aria-expanded', 'false');
+      }
+    });
+  }
+
+  // Reset conversation
+  if (chatResetBtn) {
+    chatResetBtn.addEventListener('click', () => {
+      if (confirm('Start a fresh conversation?')) {
+        localStorage.removeItem('emerald_landscape_chat_session');
+        chatSessionId = getChatSessionId();
+        if (chatMessages) {
+          chatMessages.innerHTML = `
+            <div class="chat-msg chat-msg-bot">
+              <div class="chat-msg-bubble">
+                <p><strong>Conversation refreshed! 🌿</strong></p>
+                <p>How can our landscape architecture team help you today?</p>
+                <div class="chat-quick-chips">
+                  <button type="button" class="chip-btn" data-query="What commercial landscaping services do you provide?">🌿 Commercial Grounds</button>
+                  <button type="button" class="chip-btn" data-query="Tell me about your architectural hardscaping and patios.">🧱 Hardscape & Patios</button>
+                  <button type="button" class="chip-btn" data-query="How does your nightscape lighting design work?">💡 Nightscape Lighting</button>
+                  <button type="button" class="chip-btn" data-query="I'd like to get an estimate for my property.">💵 Request Estimate</button>
+                </div>
+              </div>
+              <span class="chat-msg-time">Just now</span>
+            </div>
+          `;
+        }
+      }
+    });
+  }
+
+  // Chip buttons click delegation
+  if (chatMessages) {
+    chatMessages.addEventListener('click', (e) => {
+      const chip = e.target.closest('.chip-btn');
+      if (chip && chip.dataset.query) {
+        const query = chip.dataset.query;
+        handleSendMessage(query);
+      }
+    });
+  }
+
+  // Send message handler
+  async function handleSendMessage(text) {
+    const query = (text || (chatInput ? chatInput.value : '')).trim();
+    if (!query) return;
+
+    if (chatInput) {
+      chatInput.value = '';
+    }
+
+    appendChatMessage('user', query);
+
+    // Show typing indicator & disable button
+    if (chatTypingIndicator) {
+      chatTypingIndicator.style.display = 'flex';
+      scrollChatToBottom();
+    }
+    if (chatSendBtn) {
+      chatSendBtn.disabled = true;
+    }
+
+    try {
+      const response = await fetch(N8N_CHAT_WEBHOOK_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          chatInput: query,
+          sessionId: chatSessionId
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const botReply = data.output || data.text || (typeof data === 'string' ? data : JSON.stringify(data));
+      appendChatMessage('bot', botReply);
+    } catch (err) {
+      console.warn('n8n Chat Request Error:', err);
+      appendChatMessage('bot', `⚠️ **Could not connect to the local n8n Chat Agent.**\n\n* Make sure n8n is running locally at \`http://localhost:5678\`.\n* Or call our direct operations desk at **(800) 555-LUSA** for immediate assistance.`);
+    } finally {
+      if (chatTypingIndicator) {
+        chatTypingIndicator.style.display = 'none';
+      }
+      if (chatSendBtn) {
+        chatSendBtn.disabled = false;
+      }
+      if (chatInput) {
+        chatInput.focus();
+      }
+    }
+  }
+
+  // Form submit handler
+  if (chatInputForm) {
+    chatInputForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      handleSendMessage();
+    });
+  }
 });

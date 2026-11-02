@@ -990,6 +990,104 @@
     </div>
   </footer>
 
+  <!-- Floating AI Chat Widget -->
+  <div class="chat-widget" id="chatWidget">
+    <!-- Trigger Floating Button -->
+    <button class="chat-toggle-btn" id="chatToggleBtn" aria-label="Open AI Landscape Consultant Chat" title="Chat with Emerald AI">
+      <div class="chat-pulse-ring"></div>
+      <span class="chat-status-dot"></span>
+      <div class="chat-toggle-icon chat-icon-open">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
+      </div>
+      <div class="chat-toggle-icon chat-icon-close">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </div>
+      <span class="chat-badge-pill">Ask AI</span>
+    </button>
+
+    <!-- Chat Modal Window -->
+    <div class="chat-window" id="chatWindow" aria-hidden="true">
+      <div class="chat-header">
+        <div class="chat-avatar-wrapper">
+          <div class="chat-avatar">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2L4 9v13h16V9l-8-7zm0 4.5l5 4.1V20h-3v-5h-4v5H7v-9.4l5-4.1z"/>
+            </svg>
+          </div>
+          <span class="chat-online-badge" title="Online 24/7"></span>
+        </div>
+        <div class="chat-title-info">
+          <h4>Emerald AI Consultant</h4>
+          <p><span class="pulsing-dot-sm"></span> Powered by Gemini 2.5 Flash</p>
+        </div>
+        <div class="chat-header-actions">
+          <button class="chat-action-btn" id="chatResetBtn" title="Reset Conversation" aria-label="Reset Conversation">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="1 4 1 10 7 10"></polyline>
+              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+            </svg>
+          </button>
+          <button class="chat-action-btn" id="chatCloseBtn" title="Close Chat" aria-label="Close Chat">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="chat-messages" id="chatMessages">
+        <!-- Initial Bot Greeting -->
+        <div class="chat-msg chat-msg-bot">
+          <div class="chat-msg-bubble">
+            <p><strong>Welcome to LandscapesUSA! 👋</strong></p>
+            <p>I'm your AI landscape architect and project consultant. How can I help elevate your grounds today?</p>
+            <div class="chat-quick-chips">
+              <button type="button" class="chip-btn" data-query="What commercial landscaping services do you provide?">🌿 Commercial Grounds</button>
+              <button type="button" class="chip-btn" data-query="Tell me about your architectural hardscaping and patios.">🧱 Hardscape & Patios</button>
+              <button type="button" class="chip-btn" data-query="How does your nightscape lighting design work?">💡 Nightscape Lighting</button>
+              <button type="button" class="chip-btn" data-query="I'd like to get an estimate for my property.">💵 Request Estimate</button>
+            </div>
+          </div>
+          <span class="chat-msg-time">Just now</span>
+        </div>
+      </div>
+
+      <div class="chat-typing-indicator" id="chatTypingIndicator" style="display: none;">
+        <span class="typing-dot"></span>
+        <span class="typing-dot"></span>
+        <span class="typing-dot"></span>
+        <span class="typing-text">Emerald AI is thinking...</span>
+      </div>
+
+      <form class="chat-input-form" id="chatInputForm">
+        <input 
+          type="text" 
+          id="chatInput" 
+          class="chat-input" 
+          placeholder="Ask about design, maintenance, pricing..." 
+          autocomplete="off"
+          required
+        />
+        <button type="submit" class="chat-send-btn" id="chatSendBtn" aria-label="Send message">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+        </button>
+      </form>
+
+      <div class="chat-footer-note">
+        <span>Connected to Local n8n Agent &bull; Instant Responses</span>
+      </div>
+    </div>
+  </div>
+
   <!-- Script -->
   <script src="app.js"></script>
 </body>
