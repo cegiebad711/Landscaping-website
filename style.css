@@ -2131,6 +2131,39 @@ body::before {
   border-top: 1px solid rgba(255, 255, 255, 0.04);
 }
 
+/* Chat history divider */
+.chat-history-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 14px 0 8px;
+  position: relative;
+  width: 100%;
+}
+
+.chat-history-divider::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(132, 204, 22, 0.2);
+}
+
+.chat-history-divider span {
+  position: relative;
+  background: var(--bg-surface);
+  border: 1px solid rgba(132, 204, 22, 0.35);
+  padding: 3px 12px;
+  border-radius: var(--radius-full);
+  font-size: 10px;
+  color: var(--lime-bright);
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
 /* Mobile responsiveness */
 @media (max-width: 480px) {
   .chat-widget {
@@ -2154,4 +2187,5 @@ body::before {
     height: 56px;
   }
 }
+
 

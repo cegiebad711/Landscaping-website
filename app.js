@@ -326,8 +326,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 10. Emerald AI Chat Widget System (Connected to Local n8n Agent)
-  const N8N_CHAT_WEBHOOK_URL = 'http://localhost:5678/webhook/3dd4f90f-8626-49ed-bf5a-3137760a6dd6/chat';
+  // 10. Emerald AI Chat Widget System (Connected to Local n8n Agent with Live HubSpot CRM Tool)
+  const N8N_CHAT_WEBHOOK_URL = 'http://localhost:5678/webhook/7675966b-5b85-4ebf-b360-1482728bd460/chat';
   const chatWidget = document.getElementById('chatWidget');
   const chatToggleBtn = document.getElementById('chatToggleBtn');
   const chatWindow = document.getElementById('chatWindow');
@@ -339,17 +339,49 @@ document.addEventListener('DOMContentLoaded', () => {
   const chatSendBtn = document.getElementById('chatSendBtn');
   const chatTypingIndicator = document.getElementById('chatTypingIndicator');
 
+  // Storage keys
+  const CHAT_SESSION_KEY = 'emerald_landscape_chat_session';
+  const CHAT_HISTORY_KEY = 'emerald_landscape_chat_history';
+
   // Session ID manager
   function getChatSessionId() {
-    let sid = localStorage.getItem('emerald_landscape_chat_session');
+    let sid = localStorage.getItem(CHAT_SESSION_KEY);
     if (!sid) {
       sid = 'session_' + Math.random().toString(36).substring(2, 11) + '_' + Date.now();
-      localStorage.setItem('emerald_landscape_chat_session', sid);
+      localStorage.setItem(CHAT_SESSION_KEY, sid);
     }
     return sid;
   }
 
   let chatSessionId = getChatSessionId();
+
+  // Chat History Storage helpers
+  function getStoredChatHistory() {
+    try {
+      const stored = localStorage.getItem(CHAT_HISTORY_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch (e) {
+      console.warn('Failed to parse chat history:', e);
+      return [];
+    }
+  }
+
+  function saveChatMessageToStorage(role, content, timeStr) {
+    try {
+      const history = getStoredChatHistory();
+      history.push({ role, content, time: timeStr, timestamp: Date.now() });
+      if (history.length > 60) history.shift();
+      localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(history));
+    } catch (e) {
+      console.warn('Failed to save chat message:', e);
+    }
+  }
+
+  function clearStoredChatHistory() {
+    localStorage.removeItem(CHAT_HISTORY_KEY);
+    localStorage.removeItem(CHAT_SESSION_KEY);
+    chatSessionId = getChatSessionId();
+  }
 
   // Format simple markdown into HTML
   function formatMarkdown(text) {
@@ -399,10 +431,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function appendChatMessage(role, content) {
+  function appendChatMessage(role, content, customTime, saveToStorage = true) {
     if (!chatMessages) return;
 
-    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const timeStr = customTime || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const msgDiv = document.createElement('div');
     msgDiv.className = `chat-msg chat-msg-${role}`;
 
@@ -423,7 +455,30 @@ document.addEventListener('DOMContentLoaded', () => {
     msgDiv.appendChild(timeSpan);
     chatMessages.appendChild(msgDiv);
     scrollChatToBottom();
+
+    if (saveToStorage) {
+      saveChatMessageToStorage(role, content, timeStr);
+    }
   }
+
+  // Load chat history from storage on page startup
+  function loadChatHistory() {
+    const history = getStoredChatHistory();
+    if (!history || history.length === 0 || !chatMessages) return;
+
+    const divider = document.createElement('div');
+    divider.className = 'chat-history-divider';
+    divider.innerHTML = '<span>Previous Chat History</span>';
+    chatMessages.appendChild(divider);
+
+    history.forEach(item => {
+      appendChatMessage(item.role, item.content, item.time, false);
+    });
+    scrollChatToBottom();
+  }
+
+  // Initialize previous history if any
+  loadChatHistory();
 
   // Toggle chat widget open/close
   if (chatToggleBtn && chatWidget) {
@@ -454,9 +509,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // Reset conversation
   if (chatResetBtn) {
     chatResetBtn.addEventListener('click', () => {
-      if (confirm('Start a fresh conversation?')) {
-        localStorage.removeItem('emerald_landscape_chat_session');
-        chatSessionId = getChatSessionId();
+      if (confirm('Start a fresh conversation? This will clear previous chat history.')) {
+        clearStoredChatHistory();
         if (chatMessages) {
           chatMessages.innerHTML = `
             <div class="chat-msg chat-msg-bot">
